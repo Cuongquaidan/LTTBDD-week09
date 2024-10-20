@@ -5,78 +5,55 @@ import {
     Pressable,
     StyleSheet,
     ScrollView,
-    FlatList,
     SafeAreaView,
 } from "react-native";
-import React, { useState, useEffect } from "react";
-const data = [
-    {
-        id: 1,
-        image: require("./assets/bifour_-removebg-preview.png"),
-        name: "Penarello",
-        desc: "It is a very important form of writing as we write almost everything in paragraphs, be it an answer, essay, story, emails, etc.",
-        category: "Mountain",
-        price: 1800,
-        discount: 10,
-    },
-    {
-        id: 2,
-        image: require("./assets/bione-removebg-preview.png"),
-        name: "Pina Mountain",
-        desc: "It is a very important form of writing as we write almost everything in paragraphs, be it an answer, essay, story, emails, etc.",
-        category: "Mountain",
-        price: 1700,
-        discount: 10,
-    },
-    {
-        id: 3,
-        image: require("./assets/bithree_removebg-preview.png"),
-        name: "Pina Bike",
-        desc: "It is a very important form of writing as we write almost everything in paragraphs, be it an answer, essay, story, emails, etc.",
-        category: "Roadbike",
-        price: 1500,
-        discount: 15,
-    },
-    {
-        id: 4,
-        image: require("./assets/bitwo-removebg-preview.png"),
-        name: "Penarello",
-        desc: "It is a very important form of writing as we write almost everything in paragraphs, be it an answer, essay, story, emails, etc.",
-        category: "Roadbike",
-        price: 1900,
-        discount: 10,
-    },
-    {
-        id: 5,
-        image: require("./assets/bifour_-removebg-preview.png"),
-        name: "Pina Bike",
-        desc: "It is a very important form of writing as we write almost everything in paragraphs, be it an answer, essay, story, emails, etc.",
-        category: "Roadbike",
-        price: 1500,
-        discount: 15,
-    },
-    {
-        id: 6,
-        image: require("./assets/bione-removebg-preview.png"),
-        name: "Penarello",
-        desc: "It is a very important form of writing as we write almost everything in paragraphs, be it an answer, essay, story, emails, etc.",
-        category: "Mountain",
-        price: 2900,
-        discount: 20,
-    },
-];
+import React, { useState, useCallback, useReducer, useMemo } from "react";
+import useGetFetchData from "./hooks/useGetFetchData";
+
+const xe = {
+    xe4: require("./assets/bifour_-removebg-preview.png"),
+    xe1: require("./assets/bione-removebg-preview.png"),
+    xe2: require("./assets/bitwo-removebg-preview.png"),
+    xe3: require("./assets/bithree_removebg-preview.png"),
+};
+
+const initialState = { category: "All" };
+const reducer = (state, action) => {
+    switch (action.type) {
+        case "SET_CATEGORY": {
+            return { ...state, category: action.payload };
+        }
+        default:
+            return state;
+    }
+};
+
 const Shop = ({ navigation }) => {
-    const [category, setCategory] = useState("All");
-    const filteredData =
-        category === "All"
+    const { data } = useGetFetchData(
+        "https://6710cfdca85f4164ef2f6c45.mockapi.io/api/bikes"
+    );
+    // const [category, setCategory] = useState("All");
+    const [state, dispatch] = useReducer(reducer, initialState);
+    const filteredData = useMemo(() => {
+        return state.category === "All"
             ? data
-            : data.filter((item) => item.category === category);
-    const handleCLick = (data) => {
-        navigation.navigate("BikeDetails", { bike: data });
-    };
+            : data.filter((item) => item.category === state.category);
+    }, [data, state.category]);
+
+    // const handleCLick = (data) => {
+    //   navigation.navigate("BikeDetails", { bike: data });
+    // }
+
+    const handleClick = useCallback(
+        (item) => {
+            navigation.navigate("BikeDetails", { bike: item });
+        },
+        [navigation]
+    );
+
     return (
         <SafeAreaView style={{ flex: 1 }}>
-            <ScrollView style={{ padding: 20 }}>
+            <ScrollView contentContainerStyle={{ padding: 20 }}>
                 <Text style={{ fontSize: 20, fontWeight: "700", color: "red" }}>
                     The world's Best Bike
                 </Text>
@@ -89,22 +66,33 @@ const Shop = ({ navigation }) => {
                     }}
                 >
                     <Pressable
-                        style={{ ...styles.category }}
-                        onPress={() => setCategory("All")}
+                        style={styles.category}
+                        onPress={() =>
+                            dispatch({ type: "SET_CATEGORY", payload: "All" })
+                        }
                     >
                         <Text
-                            style={category === "All" ? { color: "red" } : ""}
+                            style={
+                                state.category === "All" ? { color: "red" } : {}
+                            }
                         >
                             All
                         </Text>
                     </Pressable>
                     <Pressable
                         style={styles.category}
-                        onPress={() => setCategory("Mountain")}
+                        onPress={() =>
+                            dispatch({
+                                type: "SET_CATEGORY",
+                                payload: "Mountain",
+                            })
+                        }
                     >
                         <Text
                             style={
-                                category === "Mountain" ? { color: "red" } : ""
+                                state.category === "Mountain"
+                                    ? { color: "red" }
+                                    : {}
                             }
                         >
                             Mountain
@@ -112,12 +100,18 @@ const Shop = ({ navigation }) => {
                     </Pressable>
                     <Pressable
                         style={styles.category}
-                        onPress={() => setCategory("Roadbike")}
+                        onPress={() =>
+                            dispatch({
+                                type: "SET_CATEGORY",
+                                payload: "Roadbike",
+                            })
+                        }
                     >
-                        {" "}
                         <Text
                             style={
-                                category === "Roadbike" ? { color: "red" } : ""
+                                state.category === "Roadbike"
+                                    ? { color: "red" }
+                                    : {}
                             }
                         >
                             Roadbike
@@ -125,24 +119,28 @@ const Shop = ({ navigation }) => {
                     </Pressable>
                 </View>
 
-                <FlatList
-                    data={filteredData}
-                    numColumns={2}
-                    keyExtractor={(item) => item.id.toString()}
-                    columnWrapperStyle={{ marginBottom: 10 }}
-                    renderItem={({ item }) => (
+                <View
+                    style={{
+                        flexDirection: "row",
+                        flexWrap: "wrap",
+                        justifyContent: "space-between",
+                        height: 100,
+                    }}
+                >
+                    {filteredData?.map((item) => (
                         <Pressable
-                            onPress={() => handleCLick(item)}
+                            key={item.id}
+                            onPress={() => handleClick(item)}
                             style={{
                                 alignItems: "center",
-                                height: 180,
                                 position: "relative",
+                                height: 280,
                                 width: "49%",
                                 padding: 10,
                             }}
                         >
                             <Image
-                                source={item.image}
+                                source={xe[item.image]}
                                 style={{ width: "100%", height: "80%" }}
                                 resizeMode="contain"
                             />
@@ -157,8 +155,8 @@ const Shop = ({ navigation }) => {
                             <Text>{item.name}</Text>
                             <Text>${item.price}</Text>
                         </Pressable>
-                    )}
-                />
+                    ))}
+                </View>
             </ScrollView>
         </SafeAreaView>
     );
@@ -173,7 +171,6 @@ const styles = StyleSheet.create({
         borderRadius: 8,
         borderWidth: 1,
         borderColor: "#E9414187",
-        color: "gray",
         textAlign: "center",
     },
 });
